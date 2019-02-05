@@ -1,0 +1,8 @@
+public/
+templates/
+target/
+db.sql
+db.yml
+config.yml
+.idea/
+*.iml

@@ -23,9 +23,7 @@ public class MainController {
     @Path(path = "/submit", requestType = RequestType.POST)
     public void submit(@RequestParam(key = "url") String toURL, @RequestParam(key = "extension") String extension, Request request) {
         String s = tuxShortener.addURL(toURL, extension);
-
         String url = tuxShortener.isHttps() ? "https" : "http" + "://" + request.header("Host") + "/submit?url=" + tuxShortener.encode(tuxShortener.isHttps() ? "https" : "http" + "://" + request.header("Host") + "/") + s;
-        System.out.println(url);
         request.redirect(url, HTTPCode.TEMP_REDIRECT);
     }
 
@@ -42,16 +40,14 @@ public class MainController {
         String keyt = key.replaceAll("/", "");
         if (keyt.equals("")) {
             System.out.println(proto() + request.header("Host"));
-            // request.redirect(proto() + request.header("Host"), HTTPCode.TEMP_REDIRECT);
+            //request.redirect(proto() + request.header("Host"), HTTPCode.TEMP_REDIRECT);
             return;
         }
         String url = tuxShortener.getRedirectLink(keyt);
         if (keyt.equals("")) {
-            // request.redirect(proto() + request.header("Host"));
+            //request.redirect(proto() + request.header("Host"));
             return;
         }
-        System.out.println("keyt = " + keyt);
-        System.out.println("url = " + url);
         request.redirect(url, HTTPCode.REDIRECT);
     }
 

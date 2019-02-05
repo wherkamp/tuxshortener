@@ -90,14 +90,11 @@ public class TuxShortener {
 
     public String getRedirectLink(String key) {
         String query = SQL.GET.type(databaseConfig.getString("type"));
-        System.out.println(query);
         String url = "";
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             preparedStatement.setString(1, key);
             ResultSet resultSet = preparedStatement.executeQuery();
-
             while (resultSet.next()) {
-                System.out.println("Next");
                 url = resultSet.getString("url");
             }
             resultSet.close();
