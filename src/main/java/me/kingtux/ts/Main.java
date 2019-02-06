@@ -1,10 +1,7 @@
 package me.kingtux.ts;
 
-import io.javalin.Javalin;
-import io.javalin.staticfiles.Location;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
+import me.kingtux.tmvc.core.view.templategrabbers.IETemplateGrabber;
+import me.kingtux.tuxmvc.simple.SimpleWebsiteBuilder;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.simpleyaml.configuration.file.YamlFile;
 import org.simpleyaml.exceptions.InvalidConfigurationException;
@@ -26,33 +23,14 @@ public class Main {
         } catch (InvalidConfigurationException | IOException e) {
             e.printStackTrace();
         }
-        new TuxShortener(createJavlin(conf), conf.getBoolean("ssl.enabled"));
-    }
-
-    private static Javalin createJavlin(YamlFile conf) {
-        if (conf.getBoolean("ssl.enabled")) {
-            Javalin javalin = javalin = Javalin.create().enableStaticFiles("public", Location.EXTERNAL);
-            javalin.server(() -> {
-                Server server = new Server();
-                ServerConnector sslConnector = new ServerConnector(server, getSslContextFactory(conf));
-                sslConnector.setPort(conf.getInt("port"));
-                ServerConnector connector = new ServerConnector(server);
-                connector.setPort(conf.getInt("ssl.port"));
-                server.setConnectors(new Connector[]{sslConnector, connector});
-                return server;
-            });
-            return javalin;
-        } else {
-            return Javalin.create().port(conf.getInt("port")).enableStaticFiles("public", Location.EXTERNAL);
-        }
+        new TuxShortener(SimpleWebsiteBuilder.create().port(conf.getInt("port", 9089)).templateGrabber(new IETemplateGrabber(tmpls, "templates")).ssl(conf.getInt("ssl.port", 9090), getSslContextFactory(conf)).build());
     }
 
     private static SslContextFactory getSslContextFactory(YamlFile file) {
+        if (!file.getBoolean("ssl.enabled")) return null;
         SslContextFactory sslContextFactory = new SslContextFactory();
         sslContextFactory.setKeyStorePath(file.getString("ssl.path"));
         sslContextFactory.setKeyStorePassword(file.getString("ssl.password"));
         return sslContextFactory;
     }
-
-
 }

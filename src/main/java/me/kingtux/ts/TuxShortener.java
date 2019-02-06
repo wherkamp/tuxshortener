@@ -1,9 +1,7 @@
 package me.kingtux.ts;
 
-import io.javalin.Javalin;
 import me.kingtux.tmvc.core.Website;
-import me.kingtux.tmvc.core.view.templategrabbers.IETemplateGrabber;
-import me.kingtux.tuxmvc.simple.SimpleWebsiteBuilder;
+import me.kingtux.tmvc.core.request.HTTPCode;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.text.RandomStringGenerator;
 import org.simpleyaml.configuration.file.YamlFile;
@@ -19,15 +17,8 @@ public class TuxShortener {
     private Website website;
     private Connection connection;
     private YamlFile databaseConfig;
-    private File templatesFile = new File("templates");
-    private boolean https;
 
-    public boolean isHttps() {
-        return https;
-    }
-
-    public TuxShortener(Javalin javalin, boolean https) {
-        this.https = https;
+    public TuxShortener(Website build) {
         setupDBConfig();
         setupDB();
         try {
@@ -35,10 +26,14 @@ public class TuxShortener {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        if (!templatesFile.exists()) templatesFile.mkdir();
-        website = SimpleWebsiteBuilder.createSimpleBuilder(javalin).templateGrabber(new IETemplateGrabber(templatesFile, "templates")).build();
+        website = build;
         website.registerController(new MainController(this));
     }
+
+    public boolean isHttps() {
+        return website.isHttps();
+    }
+
 
     private void setupDB() {
         if (databaseConfig.getString("type").equals("MYSQL")) {
