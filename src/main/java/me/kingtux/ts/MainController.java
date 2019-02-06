@@ -25,28 +25,38 @@ public class MainController {
 
     @Path(path = "/submit", requestType = RequestType.POST)
     public void submit(@RequestParam(key = "url") String toURL, @RequestParam(key = "extension") String extension, Request request) {
-        System.out.println("F U");
         String s = tuxShortener.addURL(toURL, extension);
         String url = tuxShortener.isHttps() ? "https" : "http" + "://" + request.header("Host") + "/?url=" + tuxShortener.encode(tuxShortener.isHttps() ? "https" : "http" + "://" + request.header("Host") + "/") + s;
         request.redirect(url, HTTPCode.TEMP_REDIRECT);
     }
 
 
+    /*    @Path(path = "/:key")
+        public void redirect(@RequestParam(key = "key", type = RequestParam.Type.URL) String key, Request request) {
+            String keyt = key.replaceAll("/", "");
+            if (keyt.equals("")) {
+                request.respond("NOTHING TO SEE HERE");
+                //request.redirect(proto() + request.header("Host"), HTTPCode.TEMP_REDIRECT);
+                return;
+            }
+            String url = tuxShortener.getRedirectLink(keyt);
+            if (keyt.equals("")) {
+                request.respond("NOTHING TO SEE HERE");
+                //request.redirect(proto() + request.header("Host"));
+                return;
+            }
+            request.redirect(url, HTTPCode.REDIRECT);
+        }*/
     @Path(path = "/:key")
-    public void redirect(@RequestParam(key = "key", type = RequestParam.Type.URL) String key, Request request) {
+    public void redirect(@RequestParam(key = "key", type = RequestParam.Type.URL) String key, View view, Request request) {
+        view.setTemplate("redirect");
+        String url;
         String keyt = key.replaceAll("/", "");
         if (keyt.equals("")) {
-            request.respond("NOTHING TO SEE HERE");
-            //request.redirect(proto() + request.header("Host"), HTTPCode.TEMP_REDIRECT);
-            return;
+            url = proto() + request.header("Host");
         }
-        String url = tuxShortener.getRedirectLink(keyt);
-        if (keyt.equals("")) {
-            request.respond("NOTHING TO SEE HERE");
-            //request.redirect(proto() + request.header("Host"));
-            return;
-        }
-        request.redirect(url, HTTPCode.REDIRECT);
+        url = tuxShortener.getRedirectLink(keyt);
+        view.set("url", url);
     }
 
     private String proto() {
