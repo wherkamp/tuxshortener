@@ -101,8 +101,11 @@ public class TuxShortener {
     public String addURL(String toURL, String extension) {
         String query = SQL.INSERT.type(databaseConfig.getString("type"));
         String url = "";
+        url = getExtension(extension);
+        if (getRedirectLink(url) != null) {
+            url = "-" + generateRandomString(2);
+        }
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            url = getExtension(extension);
             preparedStatement.setString(1, url);
             preparedStatement.setString(2, toURL);
             preparedStatement.execute();
