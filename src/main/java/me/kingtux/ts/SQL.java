@@ -3,7 +3,8 @@ package me.kingtux.ts;
 public enum SQL {
     TABLE("", "CREATE TABLE IF NOT EXISTS `urls` (`id` INTEGER PRIMARY KEY AUTOINCREMENT,`key` TEXT UNIQUE, `url` TEXT );"),
     GET("", "SELECT * FROM urls WHERE key=?"),
-    INSERT("", "INSERT INTO urls (key, url) VALUES (?,?);");
+    INSERT("", "INSERT INTO urls (key, url) VALUES (?,?);"),
+    DELETE("","DELETE FROM urls WHERE key=?");
 
     private String mysql, sqlite;
 

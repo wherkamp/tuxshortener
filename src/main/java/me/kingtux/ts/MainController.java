@@ -17,6 +17,9 @@ public class MainController {
     @Path(path = "/")
     public void index(@RequestParam(key = "url", type = RequestParam.Type.GET) String s, Request request, View view) {
         if (s.isEmpty()) {
+            if (!(request.queryParam("error", "").equals(""))) {
+                view.setTemplate("index").set("error", request.queryParam("error"));
+            }
             view.setTemplate("index");
         } else {
             view.setTemplate("submit").set("url", s);
@@ -27,6 +30,12 @@ public class MainController {
     public void submit(@RequestParam(key = "url") String toURL, @RequestParam(key = "extension") String extension, Request request) {
         String s = tuxShortener.addURL(toURL, extension);
         String url = tuxShortener.isHttps() ? "https" : "http" + "://" + request.header("Host") + "/?url=" + tuxShortener.encode(tuxShortener.isHttps() ? "https" : "http" + "://" + request.header("Host") + "/") + s;
+        //toURL.equalsIgnoreCase(url) || url.toLowerCase().endsWith(s.toLowerCase()) &&
+        if (toURL.endsWith(s)) {
+            tuxShortener.delete(s);
+            request.redirect(proto() + request.header("Host") + "/?error=LINK_REDIRECTS_TO_ITSELF");
+            return;
+        }
         request.redirect(url, HTTPCode.TEMP_REDIRECT);
     }
 

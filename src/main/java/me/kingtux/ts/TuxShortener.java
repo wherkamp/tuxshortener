@@ -1,7 +1,6 @@
 package me.kingtux.ts;
 
 import me.kingtux.tmvc.core.Website;
-import me.kingtux.tmvc.core.request.HTTPCode;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.text.RandomStringGenerator;
 import org.simpleyaml.configuration.file.YamlFile;
@@ -111,6 +110,16 @@ public class TuxShortener {
             e.printStackTrace();
         }
         return url;
+    }
+
+    public void delete(String extension) {
+        String query = SQL.DELETE.type(databaseConfig.getString("type"));
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setString(1, extension);
+            preparedStatement.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     private String getExtension(String extension) {
