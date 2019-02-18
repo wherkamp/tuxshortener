@@ -1,47 +1,39 @@
 package me.kingtux.ts;
 
 import me.kingtux.tmvc.core.Website;
+import me.kingtux.tuxjsql.core.Builder;
+import me.kingtux.tuxjsql.core.CommonDataTypes;
+import me.kingtux.tuxjsql.core.TuxJSQL;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.text.RandomStringGenerator;
-import org.simpleyaml.configuration.file.YamlFile;
-import org.simpleyaml.exceptions.InvalidConfigurationException;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.sql.*;
+import java.util.Properties;
 
 public class TuxShortener {
     private Website website;
-    private Connection connection;
-    private YamlFile databaseConfig;
+    private Properties databaseConfig;
 
     public TuxShortener(Website build) {
         setupDBConfig();
-        setupDB();
-        try {
-            connection.createStatement().execute(SQL.TABLE.type(databaseConfig.getString("type")));
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+
         website = build;
         website.registerController(new MainController(this));
+        TuxJSQL.setBuilder(TuxJSQL.Type.SQL);
+        TuxJSQL.setConnection(databaseConfig);
+        Builder builder = TuxJSQL.getBuilder();
+        TuxJSQL.saveTable(TuxJSQL.getBuilder().createTable("urls", builder.createColumn("id", CommonDataTypes.INT, true), builder.createColumn("key", CommonDataTypes.TEXT, false, false, true), builder.createColumn("url", CommonDataTypes.TEXT)).createIfNotExists());
     }
 
     public boolean isHttps() {
         return website.isHttps();
     }
 
-
-    private void setupDB() {
-        if (databaseConfig.getString("type").equals("MYSQL")) {
-            connection = mysqlConnection();
-        } else {
-            connection = SQLITEConnection();
-        }
-
-    }
 
     private Connection SQLITEConnection() {
         try {
@@ -59,12 +51,12 @@ public class TuxShortener {
     }
 
     private void setupDBConfig() {
-        File file = new File("db.yml");
-        if (!file.exists()) saveResource("db.yml");
+        File file = new File("sql.properties");
+        if (!file.exists()) saveResource("sql.properties");
         try {
-            databaseConfig = new YamlFile(file);
-            databaseConfig.load();
-        } catch (InvalidConfigurationException | IOException e) {
+            databaseConfig = new Properties();
+            databaseConfig.load(new FileInputStream(file));
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -83,15 +75,11 @@ public class TuxShortener {
     }
 
     public String getRedirectLink(String key) {
-        String query = SQL.GET.type(databaseConfig.getString("type"));
         String url = "";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            preparedStatement.setString(1, key);
-            ResultSet resultSet = preparedStatement.executeQuery();
+        try (ResultSet resultSet = TuxJSQL.getTableByName("urls").select(key)) {
             while (resultSet.next()) {
                 url = resultSet.getString("url");
             }
-            resultSet.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -99,30 +87,17 @@ public class TuxShortener {
     }
 
     public String addURL(String toURL, String extension) {
-        String query = SQL.INSERT.type(databaseConfig.getString("type"));
         String url = "";
         url = getExtension(extension);
         if (getRedirectLink(url) != null) {
             url = "-" + generateRandomString(2);
         }
-        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            preparedStatement.setString(1, url);
-            preparedStatement.setString(2, toURL);
-            preparedStatement.execute();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        TuxJSQL.getTableByName("urls").insertAll(url, toURL);
         return url;
     }
 
     public void delete(String extension) {
-        String query = SQL.DELETE.type(databaseConfig.getString("type"));
-        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            preparedStatement.setString(1, extension);
-            preparedStatement.execute();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        TuxJSQL.getTableByName("urls").delete(extension);
     }
 
     private String getExtension(String extension) {
